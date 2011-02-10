@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<plug-in>
+    
+    <!-- Plugin Informations -->
+    <name>module-calendar-document</name>
+    <class>fr.paris.lutece.plugins.calendar.modules.document.service.CalendarDocumentPlugin</class>
+    <version>1.0.2</version>
+    <documentation></documentation>
+    <installation></installation>
+    <changes></changes>
+    <user-guide></user-guide>
+    <description>module.calendar-document.plugin.description</description>
+    <provider>module.calendar-document.provider</provider>
+    <provider-url>http://lutece.paris.fr</provider-url>
+    <icon-url>images/admin/skin/plugins/calendar/calendar.png</icon-url>
+    <copyright>Copyright 2001-2009 Mairie de Paris</copyright>
+	<core-version-dependency>
+		<min-core-version>2.4.0</min-core-version>
+		<max-core-version></max-core-version>	
+	</core-version-dependency>
+    
+    <!-- if the plugin must have a connection pool with parameter : 1 - yes, 0 - no -->
+    <db-pool-required>1</db-pool-required>
+    
+    <!-- Specific plugin CSS stylesheets -->
+    <css-stylesheets>
+        <css-stylesheet>calendar/calendar.css</css-stylesheet>
+    </css-stylesheets>
+    
+    <!-- Search Indexer Service -->
+	<search-indexers>
+		<search-indexer>
+			<search-indexer-class>
+				fr.paris.lutece.plugins.calendar.modules.document.service.search.DocumentCalendarIndexer
+			</search-indexer-class>
+		</search-indexer>
+	</search-indexers>
+    
+</plug-in>
+

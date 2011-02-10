@@ -1,0 +1,11 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<document>
+	<properties>
+		<title>Introduction</title>
+	</properties>
+	<body>
+		<section name="Descriptif du plugin">
+		<p>Ce plugin permet de récupérer un document (plugin-docuement) dans un évènement de calendrier (plugin-calender).</p>		
+		</section>
+	</body>
+</document>
