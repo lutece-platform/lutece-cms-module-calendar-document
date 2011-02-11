@@ -17,7 +17,7 @@
 		<repository>
 			<id>lutece</id>
 			<name>luteceRepository</name>
-			<url>http://dev.lutece.paris.fr/maven_repository</url>
+			<url>http://dev.lutece.paris.fr/maven_repository/module-calendar-document</url>
 			<layout>default</layout>
 		</repository>
 	</repositories>
@@ -37,8 +37,8 @@
 		</dependency>
 	</dependencies>
     <scm>
-        <connection>scm:svn:http://dev.lutece.paris.fr/svn/lutece/portal/trunk/plugins/cms</connection>
-        <developerConnection>scm:svn:https://dev.lutece.paris.fr/svn/lutece/portal/trunk/plugins/cms</developerConnection>
-        <url>http://dev.lutece.paris.fr/viewvc/portal/trunk/plugins/cms</url>
+        <connection>scm:svn:http://dev.lutece.paris.fr/svn/lutece/portal/trunk/plugins/cms/module-calendar-document</connection>
+        <developerConnection>scm:svn:https://dev.lutece.paris.fr/svn/lutece/portal/trunk/plugins/cms/module-calendar-document</developerConnection>
+        <url>http://dev.lutece.paris.fr/viewvc/portal/trunk/plugins/cms/module-calendar-document</url>
     </scm>
 </project>
