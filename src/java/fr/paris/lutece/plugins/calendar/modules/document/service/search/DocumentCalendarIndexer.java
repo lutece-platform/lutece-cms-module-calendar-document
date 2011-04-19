@@ -57,6 +57,7 @@ import fr.paris.lutece.portal.service.util.AppPathService;
 import fr.paris.lutece.portal.service.util.AppPropertiesService;
 import fr.paris.lutece.util.url.UrlItem;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.lucene.demo.html.HTMLParser;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
@@ -67,6 +68,7 @@ import java.io.Reader;
 import java.io.StringReader;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 
@@ -81,8 +83,9 @@ public class DocumentCalendarIndexer implements SearchIndexer
     private static final String PROPERTY_DOCUMENT_CALENDAR_TYPE = "calendar-document.calendar.document.type";
     private static final String PROPERTY_DOCUMENT_SHORT_NAME = "dcld";
     private static final String CALENDAR_SHORT_NAME = "cld";
+    /** uses calendar search page */
+    private static final String JSP_SEARCH_CALENDAR = "jsp/site/Portal.jsp?page=calendar&action=search";
     private static IFileIndexerFactory _factoryIndexer = (IFileIndexerFactory) SpringContextService.getBean( IFileIndexerFactory.BEAN_FILE_INDEXER_FACTORY );
-    private static final String BLANK = " ";
 
     /**
      * Index all documents
@@ -365,4 +368,20 @@ public class DocumentCalendarIndexer implements SearchIndexer
 
         return sbContentToIndex.toString(  );
     }
+
+    /**
+     * Defined by Calendar indexer.
+     */
+	public List<String> getListType()
+	{
+		return Collections.emptyList();
+	}
+
+	/**
+     * Defined by Calendar indexer.
+     */
+	public String getSpecificSearchAppUrl()
+	{
+		return StringUtils.EMPTY;
+	}
 }
