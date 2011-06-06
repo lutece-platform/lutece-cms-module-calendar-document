@@ -144,9 +144,21 @@ public class DocumentCalendarIndexer implements SearchIndexer
         urlEvent.addParameter( Constants.PARAMETER_DOCUMENT_ID, document.getId(  ) );
         urlEvent.addParameter( Constants.PARAM_AGENDA, strAgenda );
 
-        org.apache.lucene.document.Document docSubject = getDocument( document, sRoleKey, occurrence, strAgenda,
-                urlEvent.getUrl(  ) );
-        IndexationService.write( docSubject );
+        org.apache.lucene.document.Document docSubject = null;
+        try
+        {
+        	docSubject = getDocument( document, sRoleKey, occurrence, strAgenda,
+                    urlEvent.getUrl(  ) );
+        }
+        catch ( Exception e )
+        {
+        	String strMessage = "Document ID : " + document.getId(  ) + " - Agenda ID : " + strAgenda + " - Occurrence ID " + occurrence.getId(  );
+        	IndexationService.error( this, e, strMessage );
+        }
+        if ( docSubject != null )
+        {
+        	IndexationService.write( docSubject );
+        }
     }
 
     /**
