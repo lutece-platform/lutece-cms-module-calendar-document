@@ -44,6 +44,11 @@
 			<type>lutece-plugin</type>
 		</dependency>
 	</dependencies>
+    <properties>
+        <componentName>calendar-document</componentName>
+        <jiraProjectName>MODULECALENDARDOCUMENT</jiraProjectName>
+        <jiraComponentId>10148</jiraComponentId>
+    </properties>
     <scm>
         <connection>scm:svn:http://dev.lutece.paris.fr/svn/lutece/portal/trunk/plugins/cms/module-calendar-document</connection>
         <developerConnection>scm:svn:https://dev.lutece.paris.fr/svn/lutece/portal/trunk/plugins/cms/module-calendar-document</developerConnection>
