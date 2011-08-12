@@ -47,7 +47,7 @@
     <properties>
         <componentName>calendar-document</componentName>
         <jiraProjectName>MODULECALENDARDOCUMENT</jiraProjectName>
-        <jiraComponentId>10148</jiraComponentId>
+        <jiraComponentId>10369</jiraComponentId>
     </properties>
     <scm>
         <connection>scm:svn:http://dev.lutece.paris.fr/svn/lutece/portal/trunk/plugins/cms/module-calendar-document</connection>
