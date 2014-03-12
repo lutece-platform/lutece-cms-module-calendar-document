@@ -52,24 +52,31 @@ import fr.paris.lutece.portal.service.search.IndexationService;
 import fr.paris.lutece.portal.service.search.SearchIndexer;
 import fr.paris.lutece.portal.service.search.SearchItem;
 import fr.paris.lutece.portal.service.spring.SpringContextService;
+import fr.paris.lutece.portal.service.util.AppException;
 import fr.paris.lutece.portal.service.util.AppLogService;
 import fr.paris.lutece.portal.service.util.AppPathService;
 import fr.paris.lutece.portal.service.util.AppPropertiesService;
 import fr.paris.lutece.util.url.UrlItem;
 
-import org.apache.commons.lang.StringUtils;
-import org.apache.lucene.demo.html.HTMLParser;
-import org.apache.lucene.document.Document;
-import org.apache.lucene.document.Field;
-
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.Reader;
-import java.io.StringReader;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import org.apache.commons.lang.StringUtils;
+import org.apache.lucene.document.Document;
+import org.apache.lucene.document.Field;
+import org.apache.lucene.document.FieldType;
+import org.apache.lucene.document.StringField;
+import org.apache.lucene.document.TextField;
+import org.apache.tika.exception.TikaException;
+import org.apache.tika.metadata.Metadata;
+import org.apache.tika.parser.ParseContext;
+import org.apache.tika.parser.html.HtmlParser;
+import org.apache.tika.sax.BodyContentHandler;
+import org.xml.sax.ContentHandler;
+import org.xml.sax.SAXException;
 
 
 public class DocumentCalendarIndexer implements SearchIndexer
@@ -85,36 +92,37 @@ public class DocumentCalendarIndexer implements SearchIndexer
     private static final String CALENDAR_SHORT_NAME = "cld";
     /** uses calendar search page */
     private static final String JSP_SEARCH_CALENDAR = "jsp/site/Portal.jsp?page=calendar&action=search";
-    private static IFileIndexerFactory _factoryIndexer = (IFileIndexerFactory) SpringContextService.getBean( IFileIndexerFactory.BEAN_FILE_INDEXER_FACTORY );
+    private static IFileIndexerFactory _factoryIndexer = (IFileIndexerFactory) SpringContextService
+            .getBean( IFileIndexerFactory.BEAN_FILE_INDEXER_FACTORY );
 
     /**
      * Index all documents
-     *
+     * 
      * @throws IOException the exception
      * @throws InterruptedException the exception
      * @throws SiteMessageException the exception
      */
-    public void indexDocuments(  ) throws IOException, InterruptedException, SiteMessageException
+    public void indexDocuments( ) throws IOException, InterruptedException, SiteMessageException
     {
         String sRoleKey = "";
 
-        DocumentFilter docFilter = new DocumentFilter(  );
+        DocumentFilter docFilter = new DocumentFilter( );
         docFilter.setCodeDocumentType( AppPropertiesService.getProperty( PROPERTY_DOCUMENT_CALENDAR_TYPE ) );
 
         for ( fr.paris.lutece.plugins.document.business.Document document : DocumentHome.findByFilter( docFilter,
-                I18nService.getDefaultLocale(  ) ) )
+                I18nService.getDefaultLocale( ) ) )
         {
-            for ( AgendaResource agenda : Utils.getAgendaResourcesWithOccurrences(  ) )
+            for ( AgendaResource agenda : Utils.getAgendaResourcesWithOccurrences( ) )
             {
-                sRoleKey = agenda.getRole(  );
+                sRoleKey = agenda.getRole( );
 
-                String strAgenda = agenda.getId(  );
+                String strAgenda = agenda.getId( );
 
-                for ( Object oOccurrence : agenda.getAgenda(  ).getEvents(  ) )
+                for ( Object oOccurrence : agenda.getAgenda( ).getEvents( ) )
                 {
                     OccurrenceEvent occurrence = (OccurrenceEvent) oOccurrence;
 
-                    if ( occurrence.getDocumentId(  ) == document.getId(  ) )
+                    if ( occurrence.getDocumentId( ) == document.getId( ) )
                     {
                         indexSubject( document, sRoleKey, occurrence, strAgenda );
                     }
@@ -125,39 +133,38 @@ public class DocumentCalendarIndexer implements SearchIndexer
 
     /**
      * Recursive method for indexing a calendar event
-     *
+     * 
      * @param faq the faq linked to the subject
      * @param subject the subject
      * @throws IOException I/O Exception
      * @throws InterruptedException interruptedException
      */
     public void indexSubject( fr.paris.lutece.plugins.document.business.Document document, String sRoleKey,
-        OccurrenceEvent occurrence, String strAgenda )
-        throws IOException, InterruptedException
+            OccurrenceEvent occurrence, String strAgenda ) throws IOException, InterruptedException
     {
-        String strPortalUrl = AppPathService.getPortalUrl(  );
+        String strPortalUrl = AppPathService.getPortalUrl( );
 
         UrlItem urlEvent = new UrlItem( strPortalUrl );
         urlEvent.addParameter( XPageAppService.PARAM_XPAGE_APP, CalendarPlugin.PLUGIN_NAME );
         urlEvent.addParameter( Constants.PARAMETER_ACTION, Constants.ACTION_SHOW_RESULT );
-        urlEvent.addParameter( Constants.PARAMETER_EVENT_ID, occurrence.getEventId(  ) );
-        urlEvent.addParameter( Constants.PARAMETER_DOCUMENT_ID, document.getId(  ) );
+        urlEvent.addParameter( Constants.PARAMETER_EVENT_ID, occurrence.getEventId( ) );
+        urlEvent.addParameter( Constants.PARAMETER_DOCUMENT_ID, document.getId( ) );
         urlEvent.addParameter( Constants.PARAM_AGENDA, strAgenda );
 
         org.apache.lucene.document.Document docSubject = null;
         try
         {
-        	docSubject = getDocument( document, sRoleKey, occurrence, strAgenda,
-                    urlEvent.getUrl(  ) );
+            docSubject = getDocument( document, sRoleKey, occurrence, strAgenda, urlEvent.getUrl( ) );
         }
         catch ( Exception e )
         {
-        	String strMessage = "Document ID : " + document.getId(  ) + " - Agenda ID : " + strAgenda + " - Occurrence ID " + occurrence.getId(  );
-        	IndexationService.error( this, e, strMessage );
+            String strMessage = "Document ID : " + document.getId( ) + " - Agenda ID : " + strAgenda
+                    + " - Occurrence ID " + occurrence.getId( );
+            IndexationService.error( this, e, strMessage );
         }
         if ( docSubject != null )
         {
-        	IndexationService.write( docSubject );
+            IndexationService.write( docSubject );
         }
     }
 
@@ -169,40 +176,40 @@ public class DocumentCalendarIndexer implements SearchIndexer
      * @throws InterruptedException the exception
      * @throws SiteMessageException the exception
      */
-    public List<Document> getDocuments( String strDocument )
-        throws IOException, InterruptedException, SiteMessageException
+    public List<Document> getDocuments( String strDocument ) throws IOException, InterruptedException,
+            SiteMessageException
     {
-        List<org.apache.lucene.document.Document> listDocs = new ArrayList<org.apache.lucene.document.Document>(  );
+        List<org.apache.lucene.document.Document> listDocs = new ArrayList<org.apache.lucene.document.Document>( );
         String sRoleKey = "";
-        DocumentFilter docFilter = new DocumentFilter(  );
+        DocumentFilter docFilter = new DocumentFilter( );
         docFilter.setCodeDocumentType( AppPropertiesService.getProperty( PROPERTY_DOCUMENT_CALENDAR_TYPE ) );
 
         for ( fr.paris.lutece.plugins.document.business.Document document : DocumentHome.findByFilter( docFilter,
-                I18nService.getDefaultLocale(  ) ) )
+                I18nService.getDefaultLocale( ) ) )
         {
-            for ( AgendaResource agenda : Utils.getAgendaResourcesWithOccurrences(  ) )
+            for ( AgendaResource agenda : Utils.getAgendaResourcesWithOccurrences( ) )
             {
-                sRoleKey = agenda.getRole(  );
+                sRoleKey = agenda.getRole( );
 
-                String strAgenda = agenda.getId(  );
+                String strAgenda = agenda.getId( );
 
-                for ( Object oOccurrence : agenda.getAgenda(  ).getEvents(  ) )
+                for ( Object oOccurrence : agenda.getAgenda( ).getEvents( ) )
                 {
                     OccurrenceEvent occurrence = (OccurrenceEvent) oOccurrence;
 
-                    if ( occurrence.getDocumentId(  ) == document.getId(  ) )
+                    if ( occurrence.getDocumentId( ) == document.getId( ) )
                     {
-                        String strPortalUrl = AppPathService.getPortalUrl(  );
+                        String strPortalUrl = AppPathService.getPortalUrl( );
 
                         UrlItem urlEvent = new UrlItem( strPortalUrl );
                         urlEvent.addParameter( XPageAppService.PARAM_XPAGE_APP, CalendarPlugin.PLUGIN_NAME );
                         urlEvent.addParameter( Constants.PARAMETER_ACTION, Constants.ACTION_SHOW_RESULT );
-                        urlEvent.addParameter( Constants.PARAMETER_EVENT_ID, occurrence.getEventId(  ) );
-                        urlEvent.addParameter( Constants.PARAMETER_DOCUMENT_ID, document.getId(  ) );
+                        urlEvent.addParameter( Constants.PARAMETER_EVENT_ID, occurrence.getEventId( ) );
+                        urlEvent.addParameter( Constants.PARAMETER_DOCUMENT_ID, document.getId( ) );
                         urlEvent.addParameter( Constants.PARAM_AGENDA, strAgenda );
 
                         org.apache.lucene.document.Document doc = getDocument( document, sRoleKey, occurrence,
-                                strAgenda, urlEvent.getUrl(  ) );
+                                strAgenda, urlEvent.getUrl( ) );
                         listDocs.add( doc );
                         ;
                     }
@@ -217,7 +224,7 @@ public class DocumentCalendarIndexer implements SearchIndexer
      * Returns the indexer service name
      * @return the indexer service name
      */
-    public String getName(  )
+    public String getName( )
     {
         return AppPropertiesService.getProperty( PROPERTY_INDEXER_NAME );
     }
@@ -226,7 +233,7 @@ public class DocumentCalendarIndexer implements SearchIndexer
      * Returns the indexer service version
      * @return the indexer service version
      */
-    public String getVersion(  )
+    public String getVersion( )
     {
         return AppPropertiesService.getProperty( PROPERTY_INDEXER_VERSION );
     }
@@ -235,7 +242,7 @@ public class DocumentCalendarIndexer implements SearchIndexer
      * Returns the indexer service description
      * @return the indexer service description
      */
-    public String getDescription(  )
+    public String getDescription( )
     {
         return AppPropertiesService.getProperty( PROPERTY_INDEXER_DESCRIPTION );
     }
@@ -244,14 +251,14 @@ public class DocumentCalendarIndexer implements SearchIndexer
      * Tells whether the service is enable or not
      * @return true if enable, otherwise false
      */
-    public boolean isEnable(  )
+    public boolean isEnable( )
     {
         boolean bReturn = false;
         String strEnable = AppPropertiesService.getProperty( PROPERTY_INDEXER_ENABLE );
 
-        if ( ( strEnable != null ) &&
-                ( strEnable.equalsIgnoreCase( Boolean.TRUE.toString(  ) ) || strEnable.equals( ENABLE_VALUE_TRUE ) ) &&
-                PluginService.isPluginEnable( CalendarPlugin.PLUGIN_NAME ) )
+        if ( ( strEnable != null )
+                && ( strEnable.equalsIgnoreCase( Boolean.TRUE.toString( ) ) || strEnable.equals( ENABLE_VALUE_TRUE ) )
+                && PluginService.isPluginEnable( CalendarPlugin.PLUGIN_NAME ) )
         {
             bReturn = true;
         }
@@ -260,72 +267,87 @@ public class DocumentCalendarIndexer implements SearchIndexer
     }
 
     /**
-     * Builds a document which will be used by Lucene during the indexing of the pages of the site with the following
+     * Builds a document which will be used by Lucene during the indexing of the
+     * pages of the site with the following
      * fields : summary, uid, url, contents, title and description.
-     *
+     * 
      * @param document the document to index
      * @param strUrl the url of the documents
      * @param strRole the lutece role of the page associate to the document
-     * @param strPortletDocumentId the document id concatened to the id portlet with a & in the middle
+     * @param strPortletDocumentId the document id concatened to the id portlet
+     *            with a & in the middle
      * @return the built Document
      * @throws IOException The IO Exception
      * @throws InterruptedException The InterruptedException
      */
-    public static org.apache.lucene.document.Document getDocument( 
-        fr.paris.lutece.plugins.document.business.Document document, String strRole, Event occurrence,
-        String strAgenda, String strOccurrenceUrl ) throws IOException, InterruptedException
+    public static org.apache.lucene.document.Document getDocument(
+            fr.paris.lutece.plugins.document.business.Document document, String strRole, Event occurrence,
+            String strAgenda, String strOccurrenceUrl ) throws IOException, InterruptedException
     {
-        // make a new, empty document
-        org.apache.lucene.document.Document doc = new org.apache.lucene.document.Document(  );
+        FieldType ft = new FieldType( StringField.TYPE_STORED );
+        ft.setOmitNorms( false );
 
-        doc.add( new Field( Constants.FIELD_CALENDAR_ID, strAgenda + "_" + CALENDAR_SHORT_NAME, Field.Store.NO,
-                Field.Index.NOT_ANALYZED ) );
+        FieldType ftNotStored = new FieldType( StringField.TYPE_STORED );
+        ftNotStored.setOmitNorms( false );
+
+        FieldType ftNo = new FieldType( StringField.TYPE_STORED );
+        ftNo.setIndexed( false );
+        ftNo.setTokenized( false );
+        ftNo.setOmitNorms( false );
+
+        // make a new, empty document
+        org.apache.lucene.document.Document doc = new org.apache.lucene.document.Document( );
+
+        doc.add( new Field( Constants.FIELD_CALENDAR_ID, strAgenda + "_" + CALENDAR_SHORT_NAME, ftNotStored ) );
 
         // Add the last modified date of the file a field named "modified".
         // Use a field that is indexed (i.e. searchable), but don't tokenize
         // the field into words.
-        String strDate = Utils.getDate( occurrence.getDate(  ) );
-        doc.add( new Field( SearchItem.FIELD_DATE, strDate, Field.Store.YES, Field.Index.NOT_ANALYZED ) );
+        String strDate = Utils.getDate( occurrence.getDate( ) );
+        doc.add( new Field( SearchItem.FIELD_DATE, strDate, ft ) );
 
         // Add the url as a field named "url".  Use an UnIndexed field, so
         // that the url is just stored with the question/answer, but is not searchable.
-        doc.add( new Field( SearchItem.FIELD_URL, strOccurrenceUrl, Field.Store.YES, Field.Index.NOT_ANALYZED ) );
+        doc.add( new Field( SearchItem.FIELD_URL, strOccurrenceUrl, ft ) );
 
         // Add the uid as a field, so that index can be incrementally maintained.
         // This field is not stored with document, it is indexed, but it is not
         // tokenized prior to indexing.
-        String strOccurrenceId = String.valueOf( occurrence.getId(  ) );
-        doc.add( new Field( SearchItem.FIELD_UID, strOccurrenceId + "_" + PROPERTY_DOCUMENT_SHORT_NAME,
-                Field.Store.YES, Field.Index.NOT_ANALYZED ) );
+        String strOccurrenceId = String.valueOf( occurrence.getId( ) );
+        doc.add( new Field( SearchItem.FIELD_UID, strOccurrenceId + "_" + PROPERTY_DOCUMENT_SHORT_NAME, ft ) );
 
         String strContentToIndex = getContentToIndex( document );
-        StringReader readerPage = new StringReader( strContentToIndex );
-        HTMLParser parser = new HTMLParser( readerPage );
+        ContentHandler handler = new BodyContentHandler( );
+        Metadata metadata = new Metadata( );
+        try
+        {
+            new HtmlParser( ).parse( new ByteArrayInputStream( strContentToIndex.getBytes( ) ), handler, metadata,
+                    new ParseContext( ) );
+        }
+        catch ( SAXException e )
+        {
+            throw new AppException( "Error during page parsing." );
+        }
+        catch ( TikaException e )
+        {
+            throw new AppException( "Error during page parsing." );
+        }
 
         //the content of the article is recovered in the parser because this one
         //had replaced the encoded caracters (as &eacute;) by the corresponding special caracter (as ?)
-        Reader reader = parser.getReader(  );
-        int c;
-        StringBuffer sb = new StringBuffer(  );
-
-        while ( ( c = reader.read(  ) ) != -1 )
-        {
-            sb.append( String.valueOf( (char) c ) );
-        }
-
-        reader.close(  );
+        StringBuilder sb = new StringBuilder( handler.toString( ) );
 
         // Add the tag-stripped contents as a Reader-valued Text field so it will
         // get tokenized and indexed.
-        doc.add( new Field( SearchItem.FIELD_CONTENTS, sb.toString(  ), Field.Store.NO, Field.Index.ANALYZED ) );
+        doc.add( new Field( SearchItem.FIELD_CONTENTS, sb.toString( ), TextField.TYPE_NOT_STORED ) );
 
         // Add the title as a separate Text field, so that it can be searched
         // separately.
-        doc.add( new Field( SearchItem.FIELD_TITLE, document.getTitle(  ), Field.Store.YES, Field.Index.NO ) );
+        doc.add( new Field( SearchItem.FIELD_TITLE, document.getTitle( ), ftNo ) );
 
-        doc.add( new Field( SearchItem.FIELD_TYPE, CalendarPlugin.PLUGIN_NAME, Field.Store.YES, Field.Index.ANALYZED ) );
+        doc.add( new Field( SearchItem.FIELD_TYPE, CalendarPlugin.PLUGIN_NAME, TextField.TYPE_STORED ) );
 
-        doc.add( new Field( SearchItem.FIELD_ROLE, strRole, Field.Store.YES, Field.Index.NOT_ANALYZED ) );
+        doc.add( new Field( SearchItem.FIELD_ROLE, strRole, ft ) );
 
         // return the document
         return doc;
@@ -338,37 +360,37 @@ public class DocumentCalendarIndexer implements SearchIndexer
      */
     private static String getContentToIndex( fr.paris.lutece.plugins.document.business.Document document )
     {
-        StringBuffer sbContentToIndex = new StringBuffer(  );
-        sbContentToIndex.append( document.getTitle(  ) );
+        StringBuffer sbContentToIndex = new StringBuffer( );
+        sbContentToIndex.append( document.getTitle( ) );
 
-        for ( DocumentAttribute attribute : document.getAttributes(  ) )
+        for ( DocumentAttribute attribute : document.getAttributes( ) )
         {
-            if ( attribute.isSearchable(  ) )
+            if ( attribute.isSearchable( ) )
             {
-                if ( !attribute.isBinary(  ) )
+                if ( !attribute.isBinary( ) )
                 {
                     // Text attributes
-                    sbContentToIndex.append( attribute.getTextValue(  ) );
+                    sbContentToIndex.append( attribute.getTextValue( ) );
                     sbContentToIndex.append( " " );
                 }
                 else
                 {
                     // Binary file attribute
                     // Gets indexer depending on the ContentType (ie: "application/pdf" should use a PDF indexer)
-                    IFileIndexer indexer = _factoryIndexer.getIndexer( attribute.getValueContentType(  ) );
+                    IFileIndexer indexer = _factoryIndexer.getIndexer( attribute.getValueContentType( ) );
 
                     if ( indexer != null )
                     {
                         try
                         {
-                            ByteArrayInputStream bais = new ByteArrayInputStream( attribute.getBinaryValue(  ) );
+                            ByteArrayInputStream bais = new ByteArrayInputStream( attribute.getBinaryValue( ) );
                             sbContentToIndex.append( indexer.getContentToIndex( bais ) );
                             sbContentToIndex.append( " " );
-                            bais.close(  );
+                            bais.close( );
                         }
                         catch ( IOException e )
                         {
-                            AppLogService.error( e.getMessage(  ), e );
+                            AppLogService.error( e.getMessage( ), e );
                         }
                     }
                 }
@@ -376,24 +398,24 @@ public class DocumentCalendarIndexer implements SearchIndexer
         }
 
         // Index Metadata
-        sbContentToIndex.append( document.getXmlMetadata(  ) );
+        sbContentToIndex.append( document.getXmlMetadata( ) );
 
-        return sbContentToIndex.toString(  );
+        return sbContentToIndex.toString( );
     }
 
     /**
      * Defined by Calendar indexer.
      */
-	public List<String> getListType()
-	{
-		return Collections.emptyList();
-	}
+    public List<String> getListType( )
+    {
+        return Collections.emptyList( );
+    }
 
-	/**
+    /**
      * Defined by Calendar indexer.
      */
-	public String getSpecificSearchAppUrl()
-	{
-		return StringUtils.EMPTY;
-	}
+    public String getSpecificSearchAppUrl( )
+    {
+        return StringUtils.EMPTY;
+    }
 }
