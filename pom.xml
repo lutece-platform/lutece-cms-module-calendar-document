@@ -50,8 +50,8 @@
         <jiraComponentId>10369</jiraComponentId>
     </properties>
     <scm>
-        <connection>scm:svn:http://dev.lutece.paris.fr/svn/lutece/portal/trunk/plugins/cms/module-calendar-document</connection>
-        <developerConnection>scm:svn:https://dev.lutece.paris.fr/svn/lutece/portal/trunk/plugins/cms/module-calendar-document</developerConnection>
-        <url>http://dev.lutece.paris.fr/viewvc/lutece/portal/trunk/plugins/cms/module-calendar-document</url>
+        <connection>scm:git:https://github.com/lutece-platform/lutece-cms-module-calendar-document.git</connection>
+        <developerConnection>scm:git:https://github.com/lutece-platform/lutece-cms-module-calendar-document.git</developerConnection>
+        <url>https://github.com/lutece-platform/lutece-cms-module-calendar-document.git</url>
     </scm>
 </project>
