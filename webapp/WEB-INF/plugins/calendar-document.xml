@@ -9,7 +9,7 @@
     <changes/>
     <user-guide/>
     <description>module.calendar-document.plugin.description</description>
-    <provider>module.calendar-document.provider</provider>
+    <provider>module.calendar-document.plugin.provider</provider>
     <provider-url>http://lutece.paris.fr</provider-url>
     <icon-url>images/admin/skin/plugins/calendar/calendar.png</icon-url>
     <copyright>Copyright 2001-2011 Mairie de Paris</copyright>
